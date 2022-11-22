@@ -1,0 +1,12 @@
+site_name: MatrixOne Docs
+theme:
+  name: material
+  logo: assets/new-logo.png
+extra_css:
+  - stylesheets/extra.css
+nav:
+  - 'index.md': 'index.md'
+  - '>': 'about.md'
+extra:
+  version:
+    provider: mike
