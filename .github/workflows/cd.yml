@@ -95,13 +95,13 @@ jobs:
           git config --global user.name hello@he.com
 
       - name: Mike Dev Version Snapshot
-        if: ${{ github.ref_name == 'main' }}
+        if: ${{ github.branch == 'main' }}
         run: |
           mike deploy --push dev
       - name: Mike Released Version Snapshot
-        if: ${{ github.ref_name != 'main' }}
+        if: ${{ github.branch != 'main' }}
         run: |
-          mike deploy --push ${{ github.ref_name }}
+          mike deploy --push ${{ github.branch }}
 
       # - name: Login Docker Hub
       #   uses: docker/login-action@v2
@@ -116,5 +116,5 @@ jobs:
       #     file: ./Dockerfile
       #     push: true
       #     tags: |
-      #       matrixorigin/matrixorigin.io.cn:${{ github.ref_name }}_${{ github.sha }} #//
+      #       matrixorigin/matrixorigin.io.cn:${{ github.branch }}_${{ github.sha }} #//
       #       matrixorigin/matrixorigin.io.cn:latest
