@@ -1,27 +1,33 @@
-name: pre-cd
+name: build and push image
+# 3个功能,
+# 1. 默认更新 main 内容到 dev 文档
+# 2. 切换分支, 更新指定历史版本
+# 3. 更新 main 分支, 发布全新 Release 版本, 此时需要勾选 is_append_new_version 并指定 version
 on:
   workflow_dispatch:
     inputs:
+      is_append_new_version:
+        description: 'True To Deploy New Release, False To Update Exist Release'
+        required: false
+        type: boolean
       version:
-        description: 'Document Version'
-        required: true
-        default: 'main'
-# 3个功能, 
-# 1. 每次发布 main 更新到 dev 文档
-# 2. 发布指定版本, 和下面有点不同,就是设置 default
-# 3. 更新历史版本
-# 这些操作当然本地都可以完成, 主要是打包镜像功能
-
-# 搞个下拉, 选择其他分支就是更新历史, 选择 main 就是 dev. 如果填入 input, 则是新增
+        description: 'New Release Version, e.g 0.6, Work On True'
+        required: false
+        default: '0.1'
 
 jobs:
-  build:
+  build-new-release:
+    if: ${{ inputs.is_append_new_version }}
     runs-on: ubuntu-latest
     steps:
       - id: checkout
         uses: actions/checkout@v3
-        with: 
-          ref: ${{ inputs.version }} # 可以指定分支 checkout, 但不允许直接修改 gh-pages
+        with:
+          ref: main # 一定是根据 main 分支发布最新文档
+      - name: check branch
+        run: |
+          git status
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -29,44 +35,82 @@ jobs:
         run: |
           git rev-parse --abbrev-ref HEAD
           pip install -r requirements.txt
-
-      - name: Mike Dev Version Snapshot
-        if: ${{ inputs.version == 'main' }}
+      - name: Git Config
         run: |
           git fetch --all
-          git config --global user.email ${{ secrets.GITUSEREMAIL }}
-          git config --global user.name ${{ secrets.GITUSERNAME }}
-          mike deploy --push dev
-          
-      - name: Mike Released Version Snapshot
-        if: ${{ inputs.version != 'main' }}
-        run: |
-          git fetch --all
-          git config --global user.email ${{ secrets.GITUSEREMAIL }}
-          git config --global user.name ${{ secrets.GITUSERNAME }}
-          mike deploy --push ${{ inputs.version }}
-
+          git config --global user.email hello
+          git config --global user.name hello@he.com
       - name: Mike New Release Version Snapshot
-        if: ${{ inputs.version != 'main' }}
         run: |
-          git fetch --all
-          git config --global user.email ${{ secrets.GITUSEREMAIL }}
-          git config --global user.name ${{ secrets.GITUSERNAME }}
           mike deploy --push --update-aliases ${{ inputs.version }} latest
           mike set-default --push latest
+      - name: Checkout New Release Branch
+        run: |
+          git checkout -b ${{ inputs.version }}
+          git push -u origin ${{ inputs.version }}
+    
+      # - name: Login Docker Hub
+      #   uses: docker/login-action@v2
+      #   with:
+      #     username: ${{ secrets.DOCKERHUBUSER }}
+      #     password: ${{ secrets.DOCKERHUBPASSWORD }}
 
-      - name: Login Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUBUSER }}
-          password: ${{ secrets.DOCKERHUBPASSWORD }}
+      # - name: Build && Push
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     push: true
+      #     tags: |
+      #       matrixorigin/matrixorigin.io.cn:${{ inputs.version }}_${{ github.sha }} #//
+      #       matrixorigin/matrixorigin.io.cn:latest
 
-      - name: Build && Push
-        uses: docker/build-push-action@v2
+  build-exist-release:
+    if: ${{ !inputs.is_append_new_version }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        uses: actions/checkout@v3
+        # with:
+        # ref: ${{ inputs.version }} # 可以指定分支 checkout, 但不允许直接修改 gh-pages
+      - name: check branch
+        run: |
+          git status
+
+      - uses: actions/setup-python@v4
         with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            matrixorigin/matrixorigin.io.cn:${{ inputs.version }}_${{ github.sha }}
-            matrixorigin/matrixorigin.io.cn:latest     
+          python-version: '3.10'
+      - name: Intialiaze Python Env
+        run: |
+          git rev-parse --abbrev-ref HEAD
+          pip install -r requirements.txt
+      - name: Git Config
+        run: |
+          git fetch --all
+          git config --global user.email hello
+          git config --global user.name hello@he.com
+
+      - name: Mike Dev Version Snapshot
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          mike deploy --push dev
+      - name: Mike Released Version Snapshot
+        if: ${{ github.ref_name != 'main' }}
+        run: |
+          mike deploy --push ${{ github.ref_name }}
+
+      # - name: Login Docker Hub
+      #   uses: docker/login-action@v2
+      #   with:
+      #     username: ${{ secrets.DOCKERHUBUSER }}
+      #     password: ${{ secrets.DOCKERHUBPASSWORD }}
+
+      # - name: Build && Push
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     push: true
+      #     tags: |
+      #       matrixorigin/matrixorigin.io.cn:${{ github.ref_name }}_${{ github.sha }} #//
+      #       matrixorigin/matrixorigin.io.cn:latest
