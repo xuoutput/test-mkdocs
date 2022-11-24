@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Update Release Version, e.g main'
+        description: 'Update Released Version, e.g main'
         required: true
-        default: 'main'
+        type: choice
+        options:
+          - main
+          - '0.2'
+          - '0.3'
       is_append_new_version:
         description: 'True To Deploy New Release, False To Update Exist Release'
         required: false
