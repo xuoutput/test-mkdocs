@@ -22,3 +22,4 @@ version 0.2
 2222
 
 add 0.2 update
+add 0.2 choice
