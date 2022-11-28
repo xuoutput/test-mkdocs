@@ -27,3 +27,4 @@ add main
 release 0.4
 
 test pr sync
+test open
