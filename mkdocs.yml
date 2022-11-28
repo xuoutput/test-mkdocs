@@ -7,6 +7,7 @@ extra_css:
 nav:
   - 'index.md': 'index.md'
   - '>': 'about.md'
+
 extra:
   version:
     provider: mike
