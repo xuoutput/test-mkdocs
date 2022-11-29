@@ -67,5 +67,5 @@ jobs:
     if: ${{ github.event.pull_request.merged == true && contains(github.event.issue.labels.*.name, 'support') }}
     runs-on: ubuntu-latest
     steps:
-    - run: |
-        echo The PR was merged
+      - run: |
+          echo The PR was merged
