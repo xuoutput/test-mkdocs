@@ -1,4 +1,4 @@
-name: build and push image
+name: test cd
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 # 3个功能,
 # 1. 默认更新 main 内容到 dev 文档
