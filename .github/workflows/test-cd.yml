@@ -32,24 +32,23 @@ on:
 
 jobs:
   dump_contexts_to_log:
-    name: context to log
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
         id: github_context_step
-        run: echo "${{ toJSON(github) }}"
+        run: echo '${{ toJSON(github) }}'
       - name: Dump job context
-        run: echo "${{ toJSON(job) }}"
+        run: echo '${{ toJSON(job) }}'
       - name: Dump steps context
-        run: echo "${{ toJSON(steps) }}"
+        run: echo '${{ toJSON(steps) }}'
       - name: Dump runner context
-        run: echo "${{ toJSON(runner) }}"
+        run: echo '${{ toJSON(runner) }}'
       - name: Dump strategy context
-        run: echo "${{ toJSON(strategy) }}"
+        run: echo '${{ toJSON(strategy) }}'
       - name: Dump matrix context
-        run: echo "${{ toJSON(matrix) }}"
+        run: echo '${{ toJSON(matrix) }}'
   if_merged:
-    if: ${{ github.event.pull_request.merged == true && contains(github.event.issue.labels.*.name, 'support') }}
+    if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     steps:
       - run: |
