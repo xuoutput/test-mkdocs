@@ -1,110 +1,41 @@
 name: build and push image
 # 3个功能,
 # 1. 默认更新 main 内容到 dev 文档
-# 2. 切换分支, 更新指定历史版本
-# 3. 更新 main 分支, 发布全新 Release 版本, 此时需要勾选 is_append_new_version 并指定 version
+# 2. 更新指定分支版本文档
+# 3. 根据 main 分支, 发布全新 Release 版本, 此时需要勾选 is_append_new_version 并指定 version
 on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Update Released Version, e.g main'
+        description: 'Update Docs Version From Branch, e.g main for dev'
         required: true
         type: choice
         options:
           - main
-          - '0.2'
-          - '0.3'
           - '0.5.1'
           - '0.5.0'
           - '0.4.0'
           - '0.3.0'
-      is_append_new_version:
-        description: 'True To Deploy New Release, False To Update Exist Release'
+        default: 'main'
+      is_set_default:
+        description: 'True To Set Default Version When Visited'
         required: false
         type: boolean
-      version:
-        description: 'New Release Version, e.g 0.6.0, Work On True, Depend On main'
-        required: false
-        default: '0.6.0'
 
 jobs:
-  dump_contexts_to_log:
-    name: context to log
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump GitHub context
-        id: github_context_step
-        run: echo "${{ toJSON(github) }}"
-      - name: Dump job context
-        run: echo "${{ toJSON(job) }}"
-      - name: Dump steps context
-        run: echo "${{ toJSON(steps) }}"
-      - name: Dump runner context
-        run: echo "${{ toJSON(runner) }}"
-      - name: Dump strategy context
-        run: echo "${{ toJSON(strategy) }}"
-      - name: Dump matrix context
-        run: echo "${{ toJSON(matrix) }}"
-  build-new-release:
-    if: ${{ inputs.is_append_new_version }}
-    runs-on: ubuntu-latest
-    steps:
-      - id: checkout
-        uses: actions/checkout@v3
-        with:
-          ref: main # 一定是根据 main 分支发布最新文档
-      - name: check branch
-        run: |
-          git status
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - name: Intialiaze Python Env
-        run: |
-          git rev-parse --abbrev-ref HEAD
-          pip install -r requirements.txt
-      - name: Git Config
-        run: |
-          git fetch --all
-          git config --global user.email hello
-          git config --global user.name hello@he.com
-      - name: Mike New Release Version Snapshot
-        run: |
-          mike deploy --push --update-aliases ${{ inputs.version }} latest
-          mike set-default --push latest
-      - name: Checkout New Release Branch
-        run: |
-          git checkout -b ${{ inputs.version }}
-          git push -u origin ${{ inputs.version }}
-    
-      # - name: Login Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKERHUBUSER }}
-      #     password: ${{ secrets.DOCKERHUBPASSWORD }}
-
-      # - name: Build && Push
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     context: .
-      #     file: ./Dockerfile
-      #     push: true
-      #     tags: |
-      #       matrixorigin/matrixorigin.io.cn:${{ inputs.version }}_${{ github.sha }} #//
-      #       matrixorigin/matrixorigin.io.cn:latest
-
-  build-exist-release:
-    if: ${{ !inputs.is_append_new_version }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - id: checkout
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.branch }} # 可以指定分支 checkout, 但不允许直接修改 gh-pages
-      - name: check branch
+      - name: branch status
         run: |
           git status
+      - name: Set Version Env
+        run: |
+          if [[ ${{ inputs.branch == 'main' }} ]]; then echo "It is true."; else echo "it is false."; fi
 
       - uses: actions/setup-python@v4
         with:
@@ -113,33 +44,29 @@ jobs:
         run: |
           git rev-parse --abbrev-ref HEAD
           pip install -r requirements.txt
-      - name: Git Config
-        run: |
-          git fetch --all
-          git config --global user.email hello
-          git config --global user.name hello@he.com
+      # - name: Git Config
+      #   run: |
+      #     git fetch --all
+      #     git config --global user.email ${{ secrets.GITUSEREMAIL }}
+      #     git config --global user.name ${{ secrets.GITUSERNAME }}
 
-      - name: Mike Dev Version Snapshot
-        if: ${{ inputs.branch == 'main' }}
-        run: |
-          mike deploy --push dev
-      - name: Mike Released Version Snapshot
-        if: ${{ inputs.branch != 'main' }}
-        run: |
-          mike deploy --push ${{ inputs.branch }}
+      # - name: Mike Dev Version Snapshot
+      #   if: ${{ inputs.branch == 'main' }}
+      #   run: |
+      #     mike deploy --push dev
 
-      # - name: Login Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKERHUBUSER }}
-      #     password: ${{ secrets.DOCKERHUBPASSWORD }}
+      # - name: Mike Dev Version Snapshot
+      #   if: ${{ inputs.branch == 'main' }}
+      #   run: |
+      #     mike deploy --push dev
+      # - name: Mike Released Version Snapshot
+      #   if: ${{ inputs.branch != 'main' }}
+      #   run: |
+      #     mike deploy --push ${{ inputs.branch }}
 
-      # - name: Build && Push
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     context: .
-      #     file: ./Dockerfile
-      #     push: true
-      #     tags: |
-      #       matrixorigin/matrixorigin.io.cn:${{ inputs.branch }}_${{ github.sha }} #//
-      #       matrixorigin/matrixorigin.io.cn:latest
+      # - name: Mike Set Default Version
+      #   if: ${{ inputs.is_set_default }}
+      #   run: |
+      #     mike list
+      #     mike alias -u ${{ inputs.branch }} latest #dev?
+      #     mike set-default --push latest
