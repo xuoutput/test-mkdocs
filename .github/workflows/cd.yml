@@ -54,8 +54,9 @@ jobs:
           git config --global user.email 111
           git config --global user.name 222
 
-      - name: Mike ${{ inputs.branch }} Version Snapshot
+      - name: Mike Branch ${{ inputs.branch }} Snapshot
         run: |
+          echo "${VERSION}"
           mike deploy --push "${VERSION}"
 
       - name: Mike Set Default Version
