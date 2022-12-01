@@ -39,7 +39,7 @@ jobs:
       - name: Set Version Env
         run: |
           if [[ ${{ inputs.branch == 'main' }} ]]; then VERSION=dev; else VERSION=${{ inputs.branch }}; fi
-          echo ${VERSION}
+          echo "${VERSION}"
 
       - uses: actions/setup-python@v4
         with:
@@ -54,13 +54,13 @@ jobs:
           git config --global user.email 111
           git config --global user.name 222
 
-      - name: Mike ${VERSION} Version Snapshot
+      - name: Mike "${VERSION}" Version Snapshot
         run: |
-          mike deploy --push ${VERSION}
+          mike deploy --push "${VERSION}"
 
       - name: Mike Set Default Version
         if: ${{ inputs.is_set_default }}
         run: |
           mike list
-          mike alias -u ${VERSION} latest
+          mike alias -u "${VERSION}" latest
           mike set-default --push latest
