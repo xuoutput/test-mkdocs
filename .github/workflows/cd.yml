@@ -68,10 +68,12 @@ jobs:
         run: |
           mike list
           mike alias -u dev latest
+          mike list
           mike set-default --push latest
       - name: Mike Set Default Version
         if: ${{ inputs.branch != 'main' && inputs.is_set_default }}
         run: |
           mike list
           mike alias -u ${{ inputs.branch }} latest
+          mike list
           mike set-default --push latest
