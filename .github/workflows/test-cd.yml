@@ -33,7 +33,7 @@ on:
 
 jobs:
   dump_contexts_to_log:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
         run: echo '${{ toJSON(github) }}'
@@ -62,9 +62,16 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
-  if_merged:
-    if: ${{ github.event.pull_request.merged == true }}
+  if_merged_update:
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'kind/build_update') }}
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo The PR was merged
+          echo The PR was updated
+  if_merged_release:
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'kind/build_release') }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo The PR was release
+# 差一个值 版本值 github.event.pull_request.comments_url
