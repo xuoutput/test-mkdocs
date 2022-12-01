@@ -54,14 +54,24 @@ jobs:
           git config --global user.email 111
           git config --global user.name 222
 
-      - name: Mike Branch ${{ inputs.branch }} Snapshot
+      - name: Mike dev Version Snapshot
+        if: ${{ inputs.branch == 'main' }}
         run: |
-          echo "${VERSION}"
-          mike deploy --push "${VERSION}"
+          mike deploy --push dev
+      - name: Mike ${{ inputs.branch }} Version Snapshot
+        if: ${{ inputs.branch != 'main' }}
+        run: |
+          mike deploy --push ${{ inputs.branch }}
 
       - name: Mike Set Default Version
-        if: ${{ inputs.is_set_default }}
+        if: ${{ inputs.branch == 'main' && inputs.is_set_default }}
         run: |
           mike list
-          mike alias -u "${VERSION}" latest
+          mike alias -u dev latest
+          mike set-default --push latest
+      - name: Mike Set Default Version
+        if: ${{ inputs.branch != 'main' && inputs.is_set_default }}
+        run: |
+          mike list
+          mike alias -u ${{ inputs.branch }} latest
           mike set-default --push latest
